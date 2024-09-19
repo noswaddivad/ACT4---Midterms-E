@@ -1,0 +1,191 @@
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.PriorityQueue;
+
+public class BusTicketingSystemGUI extends JFrame {
+    private JTextField nameField, ageField, companionField;
+    private JCheckBox disabilityCheckBox, companionCheckBox;
+    private JTextArea seatingArea;
+    private PriorityQueue<Passenger> busQueue;
+
+    // Keep track of available seats for each category
+    private int seniorSeat = 1;
+    private int pwdSeat = 16;
+    private int regularSeat = 31;
+
+    public BusTicketingSystemGUI() {
+        busQueue = new PriorityQueue<>(new PassengerComparator());
+
+        // Set up the main frame
+        setTitle("Bus Ticketing System");
+        setSize(400, 550);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLayout(new BorderLayout());
+
+        // Create panel for passenger form
+        JPanel formPanel = new JPanel();
+        formPanel.setLayout(new GridLayout(8, 2));
+
+        // Form fields
+        formPanel.add(new JLabel("Name:"));
+        nameField = new JTextField();
+        formPanel.add(nameField);
+
+        formPanel.add(new JLabel("Age:"));
+        ageField = new JTextField();
+        formPanel.add(ageField);
+
+        // Label and checkbox for disability with note
+        JLabel disabilityLabel = new JLabel("Do you have a disability? (Leave blank if none)");
+        formPanel.add(disabilityLabel);
+        disabilityCheckBox = new JCheckBox();
+        formPanel.add(disabilityCheckBox);
+
+        // Label and checkbox for companion with note for Senior and PWD
+        JLabel companionLabel = new JLabel("Do you have a companion? (For Seniors & PWDs only)");
+        formPanel.add(companionLabel);
+        companionCheckBox = new JCheckBox();
+        formPanel.add(companionCheckBox);
+
+        formPanel.add(new JLabel("Companion's Name:"));
+        companionField = new JTextField();
+        companionField.setEnabled(false);  // Initially disabled
+        formPanel.add(companionField);
+
+        // Enable/Disable companion field based on checkbox
+        companionCheckBox.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                if (companionCheckBox.isSelected()) {
+                    companionField.setEnabled(true);  // Enable the companion field
+                } else {
+                    companionField.setText("");  // Clear the text
+                    companionField.setEnabled(false);  // Disable the companion field
+                }
+            }
+        });
+
+        // Add passenger button
+        JButton addPassengerButton = new JButton("Add Passenger");
+        formPanel.add(addPassengerButton);
+
+        // Action listener for "Add Passenger" button
+        addPassengerButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                addPassenger();
+            }
+        });
+
+        // Button to display seating order
+        JButton showSeatingButton = new JButton("Show Seating Order");
+        formPanel.add(showSeatingButton);
+
+        showSeatingButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                displaySeatingOrder();
+            }
+        });
+
+        add(formPanel, BorderLayout.NORTH);
+
+        // Text area to display seating
+        seatingArea = new JTextArea();
+        seatingArea.setEditable(false);
+        add(new JScrollPane(seatingArea), BorderLayout.CENTER);
+    }
+
+    // Method to add passenger to the queue
+    private void addPassenger() {
+        String name = nameField.getText();
+        int age = Integer.parseInt(ageField.getText());
+        boolean hasDisability = disabilityCheckBox.isSelected();
+        boolean hasCompanion = companionCheckBox.isSelected();
+        String companionName = companionField.getText();
+
+        // Create a new passenger
+        Passenger passenger = new Passenger(name, age, hasDisability, hasCompanion, companionName);
+
+        // Assign a seat when the passenger is added
+        passenger.seatNumber = assignSeat(passenger);
+
+        busQueue.offer(passenger);
+
+        // Clear input fields
+        nameField.setText("");
+        ageField.setText("");
+        disabilityCheckBox.setSelected(false);
+        companionCheckBox.setSelected(false);
+        companionField.setText("");
+        companionField.setEnabled(false);  // Disable companion field after clearing
+
+        JOptionPane.showMessageDialog(this, "Passenger added successfully!");
+    }
+
+    // Method to assign a seat based on passenger type
+    private String assignSeat(Passenger p) {
+        if (p.type.equals("Senior Citizen") && seniorSeat <= 15) {
+            return "S" + seniorSeat++;
+        } else if (p.type.equals("PWD") && pwdSeat <= 30) {
+            return "P" + pwdSeat++;
+        } else if (p.type.equals("Regular Passenger") && regularSeat <= 60) {
+            return "R" + regularSeat++;
+        }
+        return "No Seat Available";
+    }
+
+    // Method to display the seating order
+    private void displaySeatingOrder() {
+        seatingArea.setText(""); // Clear previous seating order
+        PriorityQueue<Passenger> tempQueue = new PriorityQueue<>(busQueue);
+
+        // Seat counters for different categories of passengers
+        int seniorSeat = 1;  // Starts from S1
+        int pwdSeat = 16;    // Starts from P16
+        int regularSeat = 31; // Starts from R31
+
+        while (!tempQueue.isEmpty()) {
+            Passenger p = tempQueue.poll();
+
+            // Determine seat based on passenger type
+            if (p.age >= 60) {
+                seatingArea.append("S" + seniorSeat + ": " + p + "\n");
+
+                // If the passenger has a companion, assign the next seat
+                if (p.hasCompanion) {
+                    seniorSeat++;
+                    seatingArea.append("S" + seniorSeat + ": " + p.companionName + " (Companion of " + p.name + ")\n");
+                }
+                seniorSeat++;  // Increment seat for next senior citizen
+            } 
+            else if (p.isPWD) {
+                seatingArea.append("P" + pwdSeat + ": " + p + "\n");
+
+                // If the passenger has a companion, assign the next seat
+                if (p.hasCompanion) {
+                    pwdSeat++;
+                    seatingArea.append("P" + pwdSeat + ": " + p.companionName + " (Companion of " + p.name + ")\n");
+                }
+                pwdSeat++;  // Increment seat for next PWD
+            } 
+            else {
+                seatingArea.append("R" + regularSeat + ": " + p + "\n");
+
+                // If the regular passenger has a companion, assign the next seat
+                if (p.hasCompanion) {
+                    regularSeat++;
+                    seatingArea.append("R" + regularSeat + ": " + p.companionName + " (Companion of " + p.name + ")\n");
+                }
+                regularSeat++;  // Increment seat for next regular passenger
+            }
+        }
+    }
+
+    public static void main(String[] args) {
+        // Run the application
+        SwingUtilities.invokeLater(() -> {
+            BusTicketingSystemGUI app = new BusTicketingSystemGUI();
+            app.setVisible(true);
+        });
+    }
+}
