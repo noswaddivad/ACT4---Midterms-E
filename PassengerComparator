@@ -1,0 +1,8 @@
+import java.util.Comparator;
+
+public class PassengerComparator implements Comparator<Passenger> {
+    @Override
+    public int compare(Passenger p1, Passenger p2) {
+        return p1.age - p2.age;  // Compare by age (older passengers get higher priority)
+    }
+}
