@@ -1,0 +1,31 @@
+public class Passenger {
+    String name;
+    int age;
+    boolean isPWD;
+    boolean hasCompanion;
+    String companionName;
+    String type;
+    String seatNumber;
+
+    public Passenger(String name, int age, boolean isPWD, boolean hasCompanion, String companionName) {
+        this.name = name;
+        this.age = age;
+        this.isPWD = isPWD;
+        this.hasCompanion = hasCompanion;
+        this.companionName = companionName;
+        
+        // Determine type based on age and disability
+        if (age >= 60) {
+            this.type = "Senior Citizen";
+        } else if (isPWD) {
+            this.type = "PWD";
+        } else {
+            this.type = "Regular Passenger";
+        }
+    }
+
+    @Override
+    public String toString() {
+        return name + " (" + type + ")";
+    }
+}
